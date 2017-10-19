@@ -1,7 +1,7 @@
 from wxpy import *
 from pycnnum import *
 import os
-import ConfigParser
+import configparser
 import datetime
 
 doc_path = "budda"
@@ -16,10 +16,11 @@ date_format = "%Y-%m-%d %H:%M:%S"
 date_interval = 60
 
 
-for file in os.listdir(path):
-	seq = int(file.split(".")[0])
-	if seq > max_file  
-		max_file = seq
+for file in os.listdir(doc_path):
+	if "pdf" in file :
+		seq = int(file.split(".")[0])
+		if seq > max_file :  
+			max_file = seq
 
 # for file in os.listdir(path):
 # 	sep = os.path.splitext(file)
@@ -36,7 +37,7 @@ def isSayHello(msg):
 	return "Hi" in msg or "Hello" in msg or "你好" in msg or "您好" in msg  or "在吗" in msg or "在嘛" in msg or "在？" in msg
 
 def isFirstNeed(msg):
-	return ("是" in msg or "需要" in msg) && ("不" not in msg)
+	return ("是" in msg or "需要" in msg) and ("不" not in msg)
 
 def isNextNumber(msg):
 	msg_number = msg.strip()
@@ -48,16 +49,16 @@ def str2num(str):
 	if not cn2num(str):
 		return cn2num(str)
 	try:
-    	return int(str)
+		return int(str)
 	except ValueError:
-    	return 0
+		return 0
 
 def studyProgress(name):
 	file = os.path.join(os.getcwd()+os.path.sep+user_path+os.path.sep+name+"conf")
 	if not os.path.exists(file):
 		return 1
 	else:
-		conf = ConfigParser.ConfigParser()
+		conf = configparser.ConfigParser()
 		conf.read(file)
 		last_file = conf.get(store_section, store_last_file)
 		time = conf.get(store_section, store_last_time)
@@ -117,7 +118,7 @@ def reply_my_friend(msg):
 			progress = studyProgress(user)
 			if 1 == progress:
 				return reply_first.format(user)
-			else
+			else:
 				return reply_next.format(user,progress, progress+1)
 		#回复第一章(只有第一章的回复为是,否)
 		if isFirstNeed(msg_text):
