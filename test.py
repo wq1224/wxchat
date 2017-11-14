@@ -15,7 +15,7 @@ store_name = "name"
 store_last_file = "last_file"
 store_last_time = "last_time"
 date_format = "%Y-%m-%d %H:%M:%S"
-date_interval = 60
+date_interval = 900
 
 for file in os.listdir(doc_path):
 	if "pdf" in file :
@@ -28,10 +28,10 @@ for file in os.listdir(doc_path):
 # 	if sep[1]=='.pdf':  
 # 		result += sep[0] + os.linesep
 
-reply_accept = "您好，{0}，我是小胖胖，感谢您关注小胖胖哦。试着给我打个招呼吧。"
-reply_ask_first = "您好，{0}，我是小胖胖，现在我可以提供佛学的讲义给您，请问您是否需要开始学习？"
+reply_accept = "您好，{0}，我是小助手，感谢您关注小助手哦。试着给我打个招呼吧。"
+reply_ask_first = "您好，{0}，我是小助手，现在我可以提供佛学的讲义给您，请问您是否需要开始学习？"
 reply_ask_next = "您好，{0}，我这边显示您已经学完了前{1}章呢，真了不起，您已经可以开始学习第{2}章了哟，您现在想学习第几章？"
-reply_no_need = "您现在不需要的话，那就有需要的时候再找小胖胖了哦，小胖胖先去服务其它佛友同修了哦！^_^"
+reply_no_need = "您现在不需要的话，那就有需要的时候再找小助手了哦，小助手先去服务其它佛友同修了哦！^_^"
 reply_no_permission = "您现在还没学到这一章哦，只能学习前{0}章的内容。"
 #reply_next.format("a","b","c")
 
@@ -104,24 +104,24 @@ bot = Bot(cache_path=True,console_qr=True)
 # filepath = os.path.join(os.getcwd()+os.path.sep+path+os.path.sep+file[0:file.rindex(".")])
 # bot.file_helper.send_file(filepath+".pdf")
 # bot.file_helper.send_file(filepath+".docx")
-my_friend = bot.friends().search('林显春')[0]
+#my_friend = bot.friends().search('林显春')[0]
 # my_friend2 = bot.friends().search('香瓜子')[0]
 # my_friend = bot.file_helper
 
 # my_friend.send(result)
 
 # 自动接受新的好友请求
-#@bot.register(msg_types=FRIENDS)
+@bot.register(msg_types=FRIENDS)
 def auto_accept_friends(msg):
     # 接受好友请求
     new_friend = msg.card.accept()
     # 向新的好友发送消息
-    new_friend.send(reply_accept.format(mgs.sender))
+    new_friend.send(reply_accept.format(new_friend.name))
 
 have_asked = {}
 # 回复 my_friend 的消息 (优先匹配后注册的函数!)
-#@bot.register(Friend, TEXT)
-@bot.register(my_friend)
+#@bot.register(my_friend)
+@bot.register(Friend, TEXT)
 def reply_my_friend(msg):
 	msg_text = msg.text.strip()
 	user = msg.sender.name
