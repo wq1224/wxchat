@@ -31,11 +31,6 @@ for file in os.listdir(doc_path):
 # 	if sep[1]=='.pdf':  
 # 		result += sep[0] + os.linesep
 
-reply_accept = "您好，{0}，我是小助手，感谢您关注小助手哦。试着给我打个招呼吧。"
-reply_ask_first = "您好，{0}，我是小助手，现在我可以提供佛学的讲义给您，请问您是否需要开始学习？"
-reply_ask_next = "您好，{0}，我这边显示您已经学完了前{1}章呢，真了不起，您已经可以开始学习第{2}章了哟，您现在想学习第几章？"
-reply_no_need = "您现在不需要的话，那就有需要的时候再找小助手了哦，小助手先去服务其它佛友同修了哦！^_^"
-reply_no_permission = "您现在还没学到这一章哦，只能学习前{0}章的内容。"
 #reply_next.format("a","b","c")
 reply_group_first = "大家好，我是灯灯，今天开始我们从头开始学习佛学讲义。下面将分享第1章内容。"
 reply_group_continue = "大家好，我是灯灯，今天我们继续学习佛学讲义。下面将分享第{0}章内容。"
@@ -49,7 +44,7 @@ def studyProgressForGroup(name, cur_member):
 		conf.read(file)
 		last_file = int(conf.get(store_section, store_last_file))
 		first_turn_member_num = int(conf.get(store_section, store_first_turn_member_num))
-		if cur_member - first_turn_member_num > new_member_number:
+		if cur_member - first_turn_member_num >= new_member_number:
 			return 1
 		elif last_file >= max_file:
 			return 1
@@ -103,19 +98,23 @@ sched = BackgroundScheduler()
 
 @sched.scheduled_job('interval', minutes=5)
 def timed_job():
-	groups = bot.groups().search('林,王琼,linky')
-    for(group in groups)
-    	current_members = len(group.members)
-    	progress = studyProgressForGroup(group,current_members)
-    	if progress == 1:
-    		group.send(reply_group_first)
-        else:
-        	group.send(reply_group_continue.format(progress))
-        group.send_file(get_article(progress)	
+	print("scheduler erery 5 min job start")	
 
-@sched.scheduled_job('cron', day_of_week='mon-fri', hour=10)
+
+@sched.scheduled_job('cron', day_of_week='mon-sun', hour=18)
 def scheduled_job():
-    print('This job is run every weekday at 10am.')
+	print("scheduler job start")
+	groups = bot.groups().search('林,王琼,linky')
+	for group in groups :
+		current_members = len(group.members)
+		group_name = group.name
+		progress = studyProgressForGroup(group_name,current_members)
+		if progress == 1:
+			group.send(reply_group_first)
+		else:
+			group.send(reply_group_continue.format(progress))
+		group.send_file(get_article(progress))
+		recordPrgressForGroup(group_name, progress, current_members)	
 
 sched.start()
 
@@ -127,4 +126,25 @@ have_asked = {}
 def reply_my_friend(msg):
 	msg.sender.send_file(get_article(1))
 
-embed()
+bot.join()
+
+# def timed_job(group_num, group):
+# 	current_members = group_num
+# 	progress = studyProgressForGroup(group,current_members)
+# 	if progress == 1:
+# 		print(reply_group_first)
+# 	else:
+# 		print(reply_group_continue.format(progress))
+# 	recordPrgressForGroup(group, progress, current_members)
+
+# timed_job(2, "group1")
+# timed_job(2, "group1")
+# timed_job(2, "group1")
+# timed_job(2, "group1")
+# timed_job(2, "group2")
+# timed_job(2, "group1")
+# timed_job(2, "group2")
+# timed_job(12, "group1")
+# timed_job(11, "group2")
+# timed_job(13, "group2")
+
