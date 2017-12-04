@@ -5,6 +5,7 @@ import configparser
 import datetime
 import pdb
 import re
+import time
 from apscheduler.schedulers.background import BackgroundScheduler
 
 doc_path = "budda"
@@ -14,6 +15,7 @@ new_member_number = 10
 #result = ""
 store_section = "progress"
 store_name = "name"
+store_nick_name = "nick_name"
 store_last_file = "last_file"
 store_last_time = "last_time"
 store_first_turn_member_num = "first_turn_member_num"
@@ -41,6 +43,10 @@ reply_group_first = "大家好，我是灯灯，今天开始我们从头开始�
 reply_group_continue = "大家好，我是灯灯，今天我们继续学习佛学讲义。下面将分享第{0}章内容。"
 #reply_next.format("a","b","c")
 
+def get_user_remark_name(pinyin):
+	user_name = re.sub('\W+','', pinyin)
+	return str(int(time.time())) + user_name
+	
 def isSayHello(msg):
 	return "Hi" in msg or "Hello" in msg or "你好" in msg or "您好" in msg  or "在吗" in msg or "在嘛" in msg or "在？" in msg
 
@@ -62,8 +68,8 @@ def str2num(str):
 	except ValueError:
 		return 0
 
-def studyProgress(name):
-	file = os.path.join(os.getcwd()+os.path.sep+user_path+os.path.sep+name+".conf")
+def studyProgress(remark_name):
+	file = os.path.join(os.getcwd()+os.path.sep+user_path+os.path.sep+remark_name+".conf")
 	if not os.path.exists(file):
 		return 1
 	else:
@@ -80,8 +86,8 @@ def studyProgress(name):
 		else:
 			return last_file
 
-def recordPrgress(name, cur_file):
-	file = os.path.join(os.getcwd()+os.path.sep+user_path+os.path.sep+name+".conf")
+def recordPrgress(remark_name, nick_name, cur_file):
+	file = os.path.join(os.getcwd()+os.path.sep+user_path+os.path.sep+remark_name+".conf")
 	conf = configparser.ConfigParser()
 	if os.path.exists(file) :
 		conf.read(file)
@@ -91,7 +97,8 @@ def recordPrgress(name, cur_file):
 			conf.set(store_section, store_last_time, datetime.datetime.now().strftime(date_format))
 	else:
 		conf.add_section(store_section)
-		conf.set(store_section, store_name, name)
+		conf.set(store_section, store_name, remark_name)
+		conf.set(store_section, store_nick_name, nick_name)
 		conf.set(store_section, store_last_file, str(cur_file))
 		conf.set(store_section, store_last_time, datetime.datetime.now().strftime(date_format))
 	conf.write(open(file,"w"))
@@ -156,8 +163,11 @@ bot = Bot(cache_path=True,console_qr=False)
 def auto_accept_friends(msg):
     # 接受好友请求
     new_friend = msg.card.accept()
+    # 给好友备注 时间戳+昵称拼音(过滤除字母数字外的字符)
+    remark_name = get_user_remark_name(new_friend.raw["PYQuanPin"])
+    new_friend.set_remark_name(remark_name)
     # 向新的好友发送消息
-    new_friend.send(reply_accept.format(new_friend.name))
+    new_friend.send(reply_accept.format(new_friend.nick_name))
 
 have_asked = {}
 # 回复 my_friend 的消息 (优先匹配后注册的函数!)
@@ -165,7 +175,7 @@ have_asked = {}
 @bot.register(Friend, TEXT)
 def reply_my_friend(msg):
 	msg_text = msg.text.strip()
-	user = msg.sender.name
+	user = msg.sender.remark_name
 	if user not in have_asked:
 		have_asked[user] = False
 	#如果提问过
@@ -173,7 +183,7 @@ def reply_my_friend(msg):
 		have_asked[user] = False
 		#回复第一章(只有第一章的回复为是,否)
 		if isFirstNeed(msg_text):
-			recordPrgress(user,1)
+			recordPrgress(user,msg.sender.nick_name, 1)
 			msg.sender.send_file(get_article(1))
 			return
 		#回复后续章
@@ -181,7 +191,7 @@ def reply_my_friend(msg):
 		if next_number !=0 :
 			progress = studyProgress(user)
 			if (progress >= next_number):
-				recordPrgress(user,next_number)
+				recordPrgress(user, msg.sender.nick_name, next_number)
 				msg.sender.send_file(get_article(next_number))
 				return
 			else:
@@ -192,9 +202,9 @@ def reply_my_friend(msg):
 		have_asked[user] = True
 		progress = studyProgress(user)
 		if 1 == progress:
-			return reply_ask_first.format(user)
+			return reply_ask_first.format(msg.sender.nick_name)
 		else:
-			return reply_ask_next.format(user,progress-1, progress)
+			return reply_ask_next.format(msg.sender.nick_name, progress-1, progress)
 
 
 sched = BackgroundScheduler()
