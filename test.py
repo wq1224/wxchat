@@ -80,7 +80,7 @@ def studyProgress(remark_name):
 		last_time = datetime.datetime.strptime(time, date_format)
 		interval = datetime.datetime.now() - last_time
 		if last_file >= max_file:
-			return 1
+			return max_file
 		elif interval.seconds > date_interval:
 			return last_file + 1
 		else:
