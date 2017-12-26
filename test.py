@@ -221,8 +221,17 @@ def scheduled_job():
 			group.send(reply_group_first)
 		else:
 			group.send(reply_group_continue.format(progress))
-		group.send_file(get_article(progress))
-		recordPrgressForGroup(group_name, progress, current_members)	
+		var = 1
+		while var <= 3 :
+		try:
+			print("scheduler job start")
+			group.send_file(get_article(progress))
+			recordPrgressForGroup(group_name, progress, current_members)	
+			var = 4
+		except ResponseError as e:
+			time.sleep(20)
+			var = var + 1
+			print("encounter ResponseError, will retry... ", e)	
 
 sched.start()
 
