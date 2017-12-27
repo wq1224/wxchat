@@ -152,7 +152,7 @@ bot = Bot(cache_path=True,console_qr=False)
 # filepath = os.path.join(os.getcwd()+os.path.sep+path+os.path.sep+file[0:file.rindex(".")])
 # bot.file_helper.send_file(filepath+".pdf")
 # bot.file_helper.send_file(filepath+".docx")
-#my_friend = bot.friends().search('林显春')[0]
+log_person = bot.friends().search('wangqiong')[0]
 # my_friend2 = bot.friends().search('香瓜子')[0]
 # my_friend = bot.file_helper
 
@@ -232,6 +232,12 @@ def scheduled_job():
 				time.sleep(20)
 				var = var + 1
 				print("encounter ResponseError, will retry... ", e)	
+				log_person.send("encounter ResponseError")
+
+
+@sched.scheduled_job('interval', minutes=60)
+def heart_beat():
+	log_person.send("dengdeng works fine")
 
 sched.start()
 
