@@ -147,101 +147,97 @@ def get_article(seq=1):
 				return filepath+".pdf"
 	return
 
+try
+	bot = Bot(cache_path=True,console_qr=True)
+	# filepath = os.path.join(os.getcwd()+os.path.sep+path+os.path.sep+file[0:file.rindex(".")])
+	# bot.file_helper.send_file(filepath+".pdf")
+	# bot.file_helper.send_file(filepath+".docx")
+	log_person = bot.friends().search('wangqiong')[0]
+	log_person.send("dengdeng started")
+	# my_friend2 = bot.friends().search('香瓜子')[0]
+	# my_friend = bot.file_helper
 
-bot = Bot(cache_path=True,console_qr=True)
-# filepath = os.path.join(os.getcwd()+os.path.sep+path+os.path.sep+file[0:file.rindex(".")])
-# bot.file_helper.send_file(filepath+".pdf")
-# bot.file_helper.send_file(filepath+".docx")
-log_person = bot.friends().search('wangqiong')[0]
-# my_friend2 = bot.friends().search('香瓜子')[0]
-# my_friend = bot.file_helper
+	# my_friend.send(result)
 
-# my_friend.send(result)
+	# 自动接受新的好友请求
+	@bot.register(msg_types=FRIENDS)
+	def auto_accept_friends(msg):
+	    # 接受好友请求
+	    new_friend = msg.card.accept()
+	    # 给好友备注 时间戳+昵称拼音(过滤除字母数字外的字符)
+	    remark_name = get_user_remark_name(new_friend.raw["PYQuanPin"])
+	    new_friend.set_remark_name(remark_name)
+	    # 向新的好友发送消息
+	    new_friend.send(reply_accept.format(new_friend.nick_name))
 
-# 自动接受新的好友请求
-@bot.register(msg_types=FRIENDS)
-def auto_accept_friends(msg):
-    # 接受好友请求
-    new_friend = msg.card.accept()
-    # 给好友备注 时间戳+昵称拼音(过滤除字母数字外的字符)
-    remark_name = get_user_remark_name(new_friend.raw["PYQuanPin"])
-    new_friend.set_remark_name(remark_name)
-    # 向新的好友发送消息
-    new_friend.send(reply_accept.format(new_friend.nick_name))
-
-have_asked = {}
-# 回复 my_friend 的消息 (优先匹配后注册的函数!)
-#@bot.register(my_friend)
-@bot.register(Friend, TEXT)
-def reply_my_friend(msg):
-	msg_text = msg.text.strip()
-	user = msg.sender.remark_name
-	if user not in have_asked:
-		have_asked[user] = False
-	#如果提问过
-	if have_asked[user]:
-		have_asked[user] = False
-		#回复第一章(只有第一章的回复为是,否)
-		if isFirstNeed(msg_text):
-			recordPrgress(user,msg.sender.nick_name, 1)
-			msg.sender.send_file(get_article(1))
-			return
-		#回复后续章
-		next_number = isNextNumber(msg_text)
-		if next_number !=0 :
-			progress = studyProgress(user)
-			if (progress >= next_number):
-				recordPrgress(user, msg.sender.nick_name, next_number)
-				msg.sender.send_file(get_article(next_number))
+	have_asked = {}
+	# 回复 my_friend 的消息 (优先匹配后注册的函数!)
+	#@bot.register(my_friend)
+	@bot.register(Friend, TEXT)
+	def reply_my_friend(msg):
+		msg_text = msg.text.strip()
+		user = msg.sender.remark_name
+		if user not in have_asked:
+			have_asked[user] = False
+		#如果提问过
+		if have_asked[user]:
+			have_asked[user] = False
+			#回复第一章(只有第一章的回复为是,否)
+			if isFirstNeed(msg_text):
+				recordPrgress(user,msg.sender.nick_name, 1)
+				msg.sender.send_file(get_article(1))
 				return
+			#回复后续章
+			next_number = isNextNumber(msg_text)
+			if next_number !=0 :
+				progress = studyProgress(user)
+				if (progress >= next_number):
+					recordPrgress(user, msg.sender.nick_name, next_number)
+					msg.sender.send_file(get_article(next_number))
+					return
+				else:
+					return reply_no_permission.format(progress)
+			return reply_no_need
+
+		else:
+			have_asked[user] = True
+			progress = studyProgress(user)
+			if 1 == progress:
+				return reply_ask_first.format(msg.sender.nick_name)
 			else:
-				return reply_no_permission.format(progress)
-		return reply_no_need
-
-	else:
-		have_asked[user] = True
-		progress = studyProgress(user)
-		if 1 == progress:
-			return reply_ask_first.format(msg.sender.nick_name)
-		else:
-			return reply_ask_next.format(msg.sender.nick_name, progress-1, progress)
+				return reply_ask_next.format(msg.sender.nick_name, progress-1, progress)
 
 
-sched = BackgroundScheduler()
-	
-@sched.scheduled_job('cron', day_of_week='mon-sun', hour=20)
-def scheduled_job():
-	print("scheduler job start")
-	groups = bot.groups()
-	for group in groups :
-		current_members = len(group.members)
-		group_name = group.name
-		progress = studyProgressForGroup(group_name,current_members)
-		if progress == 1:
-			group.send(reply_group_first)
-		else:
-			group.send(reply_group_continue.format(progress))
-		var = 1
-		while var <= 3 :
-			try:
-				print("scheduler job start")
+	sched = BackgroundScheduler()
+		
+	@sched.scheduled_job('cron', day_of_week='mon-sun', hour=20)
+	def scheduled_job():
+		print("scheduler job start")
+		groups = bot.groups()
+		for group in groups :
+			current_members = len(group.members)
+			group_name = group.name
+			progress = studyProgressForGroup(group_name,current_members)
+			if progress == 1:
+				group.send(reply_group_first)
+			else:
+				group.send(reply_group_continue.format(progress))
 				group.send_file(get_article(progress))
 				recordPrgressForGroup(group_name, progress, current_members)	
-				var = 4
-			except ResponseError as e:
-				time.sleep(20)
-				var = var + 1
-				print("encounter ResponseError, will retry... ", e)	
-				log_person.send("encounter ResponseError")
 
 
-@sched.scheduled_job('interval', minutes=60)
-def heart_beat():
-	log_person.send("dengdeng works fine")
+	@sched.scheduled_job('interval', minutes=60)
+	def heart_beat():
+		log_person.send("dengdeng works fine")
 
-sched.start()
+	sched.start()
 
-bot.join()
+	bot.join()
+
+except ResponseError as e:
+	print("encounter ResponseError" + e)
+	sys.exit();
+
 #embed()
 
 # 回复 my_friend 的消息 (优先匹配后注册的函数!)
