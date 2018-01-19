@@ -234,7 +234,10 @@ try:
 
 	bot.join()
 
-except ResponseError as e:
+except ResponseError as r:
+	print("encounter ResponseError" + r)
+	sys.exit();
+except Exception as e:
 	print("encounter ResponseError" + e)
 	sys.exit();
 
