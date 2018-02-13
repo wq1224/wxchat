@@ -169,6 +169,7 @@ def get_article(seq=1):
 	return
 
 try:
+	log_to_mail("system start now")
 	bot = Bot(cache_path=True,console_qr=True)
 	# filepath = os.path.join(os.getcwd()+os.path.sep+path+os.path.sep+file[0:file.rindex(".")])
 	# bot.file_helper.send_file(filepath+".pdf")
