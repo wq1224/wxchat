@@ -12,7 +12,6 @@ mail = "337569887@qq.com"
 passwd = "ddtgzhtuejxpbjig"
 #file = "/Users/i3/study/wxchat/budda/第十七讲 什么是因果不虚(backup).pdf"
 try:
-	print("scheduler job start")
 	#raise Exception("error")
 	msg = EmailMessage()
 	msg.set_content("email test")
@@ -34,7 +33,7 @@ try:
 
 	@bot.register(my_friend2, TEXT)
 	def reply_my_friend(msg):
-		print("reply start, pid: " + str(os.getpid()))
+		logging.warning("reply start")
 		my_friend.send("测试回复")
 		#my_friend.send_file(file)
 
@@ -44,16 +43,19 @@ try:
 
 	@sched.scheduled_job('interval', minutes=15)
 	def send_msg():
-		print("scheduler job start, pid:  "  + str(os.getpid()))
+		logging.warning("scheduler job start")
 		my_friend.send("测试")
 		#my_friend.send_file(file)
 
 	@sched.scheduled_job('interval', seconds=20)
 	def heart_beat():
-		print("alive:" + str(bot.alive))
+		logging.warning("alive:" + str(bot.alive))
 		if not bot.alive:
+			logging.warning("not alive, send email")
 			s.send_message(msg)	
 			sys.exit();
+		else:
+			logging.warning("alive, continue")
 	
 	sched.start()
 	bot.join()
@@ -61,8 +63,7 @@ try:
 	# while True:
 	# 	time.sleep(2)    #其他任务是独立的线程执行
 	# 	print('sleep!')
-except ValueError as v:
-	print("encounter ResponseError, will retry... ", e)
 except Exception as e:
-	print("encounter ResponseError, will retry... ", e)
+	logging.warning("encounter ResponseError, will retry... ", e)
+	s.send_message(msg)
 	sys.exit();
