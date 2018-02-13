@@ -7,6 +7,11 @@ import pdb
 import re
 import time
 from apscheduler.schedulers.background import BackgroundScheduler
+import smtplib
+from email.message import EmailMessage
+import logging
+logging.basicConfig()
+logging.getLogger('apscheduler').setLevel(logging.DEBUG)
 
 doc_path = "budda"
 user_path = "user"
@@ -42,6 +47,22 @@ reply_no_permission = "您现在还没学到这一章哦，只能学习前{0}章
 reply_group_first = "大家好，我是灯灯，今天开始我们从头开始学习佛学讲义。下面将分享第1章内容。"
 reply_group_continue = "大家好，我是灯灯，今天我们继续学习佛学讲义。下面将分享第{0}章内容。"
 #reply_next.format("a","b","c")
+
+def log_to_mail(log_msg):
+	try:
+		mail = "337569887@qq.com"
+		passwd = "ddtgzhtuejxpbjig"
+		msg = EmailMessage()
+		msg.set_content(log_msg)
+		msg['Subject'] = log_msg
+		msg['From'] = mail
+		msg['To'] = mail
+		s = smtplib.SMTP_SSL("smtp.qq.com",465)
+		s.login(mail, passwd)
+		s.send_message(msg)
+		logging.warning("发送成功")
+	except s.SMTPException as e:
+	    logging.warning("发送失败")
 
 def get_user_remark_name(pinyin):
 	user_name = re.sub('\W+','', pinyin)
@@ -230,15 +251,27 @@ try:
 	def heart_beat():
 		log_person.send("dengdeng works fine")
 
+	@sched.scheduled_job('interval', seconds=20)
+	def heart_beat_alive():
+		logging.warning("alive:" + str(bot.alive))
+		if not bot.alive:
+			logging.warning("not alive, send email")
+			log_to_mail("dengdeng not alive now")
+			sys.exit();
+		else:
+			logging.warning("alive, continue")
+
 	sched.start()
 
 	bot.join()
 
 except ResponseError as r:
 	print("encounter ResponseError" + r)
+	log_to_mail("dengdeng encounter ResponseError")
 	sys.exit();
 except Exception as e:
 	print("encounter ResponseError" + e)
+	log_to_mail("dengdeng encounter Exception")
 	sys.exit();
 
 #embed()
