@@ -188,9 +188,11 @@ try:
 	    new_friend = msg.card.accept()
 	    # 给好友备注 时间戳+昵称拼音(过滤除字母数字外的字符)
 	    remark_name = get_user_remark_name(new_friend.raw["PYQuanPin"])
+	    logging.warning("accepted new friend " + remark_name)
 	    new_friend.set_remark_name(remark_name)
 	    # 向新的好友发送消息
 	    new_friend.send(reply_accept.format(new_friend.nick_name))
+	    logging.warning("sent hello to new friend " + remark_name)
 
 	have_asked = {}
 	# 回复 my_friend 的消息 (优先匹配后注册的函数!)
@@ -199,6 +201,7 @@ try:
 	def reply_my_friend(msg):
 		msg_text = msg.text.strip()
 		user = msg.sender.remark_name
+		logging.warning("ready to reply to friend " + user)
 		if user not in have_asked:
 			have_asked[user] = False
 		#如果提问过
@@ -208,6 +211,7 @@ try:
 			if isFirstNeed(msg_text):
 				recordPrgress(user,msg.sender.nick_name, 1)
 				msg.sender.send_file(get_article(1))
+				logging.warning("replied the first article to " + user)
 				return
 			#回复后续章
 			next_number = isNextNumber(msg_text)
@@ -216,12 +220,16 @@ try:
 				if (progress >= next_number):
 					recordPrgress(user, msg.sender.nick_name, next_number)
 					msg.sender.send_file(get_article(next_number))
+					logging.warning("replied " + str(next_number) + " article to " + user)
 					return
 				else:
+					logging.warning("will reply no pemission for " + str(next_number) + " article to " + user)
 					return reply_no_permission.format(progress)
+			logging.warning("will reply no need to " + user)
 			return reply_no_need
 
 		else:
+			logging.warning("will reply question to " + user)
 			have_asked[user] = True
 			progress = studyProgress(user)
 			if 1 == progress:
@@ -234,8 +242,9 @@ try:
 		
 	@sched.scheduled_job('cron', day_of_week='mon-sun', hour=20)
 	def scheduled_job():
-		print("scheduler job start")
+		logging.warning("start scheduled_job to send articles to group")
 		groups = bot.groups()
+		logging.warning("get groups name over")
 		for group in groups :
 			current_members = len(group.members)
 			group_name = group.name
@@ -245,12 +254,15 @@ try:
 			else:
 				group.send(reply_group_continue.format(progress))
 				group.send_file(get_article(progress))
-				recordPrgressForGroup(group_name, progress, current_members)	
+				recordPrgressForGroup(group_name, progress, current_members)
+			logging.warning("send " + str(progress) + " article to group " + group_name)	
 
 
 	@sched.scheduled_job('interval', minutes=60)
 	def heart_beat():
+		logging.warning("start scheduled_job to send msg to writer for heartbeat")
 		log_person.send("dengdeng works fine")
+		logging.warning("sent to writer over")
 
 	@sched.scheduled_job('interval', seconds=20)
 	def heart_beat_alive():
@@ -267,11 +279,11 @@ try:
 	bot.join()
 
 except ResponseError as r:
-	print("encounter ResponseError" + r)
+	logging.warning("encounter ResponseError")
 	log_to_mail("dengdeng encounter ResponseError")
 	sys.exit();
 except Exception as e:
-	print("encounter ResponseError" + e)
+	logging.warning("encounter Exception")
 	log_to_mail("dengdeng encounter Exception")
 	sys.exit();
 
