@@ -10,7 +10,8 @@ from apscheduler.schedulers.background import BackgroundScheduler
 import smtplib
 from email.message import EmailMessage
 import logging
-logging.basicConfig()
+logging.basicConfig(level=logging.DEBUG,
+                filename='wxchat.log')
 logging.getLogger('apscheduler').setLevel(logging.DEBUG)
 
 doc_path = "budda"
