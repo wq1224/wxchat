@@ -10,8 +10,8 @@ from apscheduler.schedulers.background import BackgroundScheduler
 import smtplib
 from email.message import EmailMessage
 import logging
-logging.basicConfig(level=logging.DEBUG,
-                filename='wxchat.log')
+logging.basicConfig(level=logging.DEBUG)
+                #filename='wxchat.log'
 logging.getLogger('apscheduler').setLevel(logging.DEBUG)
 
 doc_path = "budda"
@@ -259,21 +259,30 @@ try:
 			logging.warning("send " + str(progress) + " article to group " + group_name)	
 
 
-	@sched.scheduled_job('interval', minutes=60)
+	@sched.scheduled_job('interval', minutes=15)
 	def heart_beat():
-		logging.warning("start scheduled_job to send msg to writer for heartbeat")
-		log_person.send("dengdeng works fine")
-		logging.warning("sent to writer over")
-
-	@sched.scheduled_job('interval', seconds=20)
-	def heart_beat_alive():
-		logging.warning("alive:" + str(bot.alive))
-		if not bot.alive:
-			logging.warning("not alive, send email")
-			log_to_mail("dengdeng not alive now")
+		try:
+			logging.warning("start scheduled_job to send msg to writer for heartbeat")
+			log_person.send("dengdeng works fine")
+			logging.warning("sent to writer over")
+		except ResponseError as r:
+			logging.warning("dengdeng encounter ResponseError when heart beat")
+			log_to_mail("dengdeng encounter ResponseError when heart beat")
 			sys.exit();
-		else:
-			logging.warning("alive, continue")
+		except Exception as e:
+			logging.warning("dengdeng encounter Exception when heart beat")
+			log_to_mail("dengdeng encounter Exception when heart beat")
+			sys.exit();
+
+	# @sched.scheduled_job('interval', seconds=20)
+	# def heart_beat_alive():
+	# 	logging.warning("alive:" + str(bot.alive))
+	# 	if not bot.alive:
+	# 		logging.warning("not alive, send email")
+	# 		log_to_mail("dengdeng not alive now")
+	# 		sys.exit();
+	# 	else:
+	# 		logging.warning("alive, continue")
 
 	sched.start()
 
