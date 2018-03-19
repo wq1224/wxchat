@@ -65,6 +65,15 @@ def log_to_mail(log_msg):
 	except s.SMTPException as e:
 	    logging.warning("发送失败")
 
+def kill_process():
+	ps_str = os.popen("ps -ef | grep python3").read()
+	ps_strs = ps_str.split()
+	for each_ps in ps_strs:
+		if "test.py" in each_ps:
+			ps_str = each_ps
+	pid = ps_str.split()[1]
+	os.system("kill -9 " + pid)
+
 def get_user_remark_name(pinyin):
 	user_name = re.sub('\W+','', pinyin)
 	return str(int(time.time())) + user_name
@@ -268,10 +277,12 @@ try:
 		except ResponseError as r:
 			logging.warning("dengdeng encounter ResponseError when heart beat")
 			log_to_mail("dengdeng encounter ResponseError when heart beat")
+			kill_process()
 			sys.exit();
 		except Exception as e:
 			logging.warning("dengdeng encounter Exception when heart beat")
 			log_to_mail("dengdeng encounter Exception when heart beat")
+			kill_process()
 			sys.exit();
 
 	# @sched.scheduled_job('interval', seconds=20)
