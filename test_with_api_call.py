@@ -31,6 +31,8 @@ store_first_turn_member_num = "first_turn_member_num"
 date_format = "%Y-%m-%d %H:%M:%S"
 date_interval = 900
 
+base_api_url = "http://106.14.0.107:8080/angular/"
+
 for file in os.listdir(doc_path):
 	if "pdf" in file :
 		seq = int(file.split(".")[0])
@@ -52,6 +54,12 @@ reply_group_first = "大家好，我是灯灯，今天开始我们从头开始�
 reply_group_continue = "大家好，我是灯灯，今天我们继续学习佛学讲义。下面将分享第{0}章内容。"
 #reply_next.format("a","b","c")
 
+def get_user_info(user_remark_name):
+	result = requests.get(base_api_url + "getWechatUser?wechatUserId=" + user_remark_name)
+	if  result.text.strip(): 
+		return result.json()
+	else:
+		return
 
 def log_to_mail(log_msg):
 	try:
@@ -104,8 +112,8 @@ def str2num(str):
 		return 0
 
 def studyProgress(remark_name):
-	file = os.path.join(os.getcwd()+os.path.sep+user_path+os.path.sep+remark_name+".conf")
-	if not os.path.exists(file):
+	result = get_user_info(remark_name)
+	if not result:
 		return 1
 	else:
 		conf = configparser.ConfigParser()

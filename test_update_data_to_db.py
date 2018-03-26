@@ -1,5 +1,3 @@
-from wxpy import *
-from pycnnum import *
 import pdb
 import os
 import configparser
@@ -44,7 +42,11 @@ def change_record(remark_name, nick_name):
 github_url = "http://106.14.0.107:8080/angular/getWechatUser?wechatUserId=test"
 #data = json.dumps({'name':'test', 'description':'some test repo'}) 
 r = requests.get(github_url)
-print(r.json())
-
+if  r.text.strip():  
+	result = r.json()
+	print(result["wechatUserId"])
+	print(result["jinDu"])
+	print(result["updateTime"])
+	
 
 
