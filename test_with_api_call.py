@@ -23,11 +23,11 @@ max_file = 1
 new_member_number = 10
 #result = ""
 store_section = "progress"
-store_name = "name"
-store_nick_name = "nick_name"
-store_last_file = "last_file"
-store_last_time = "last_time"
-store_first_turn_member_num = "first_turn_member_num"
+store_name = "wechatUserId"
+store_nick_name = "userName"
+store_last_file = "jinDu"
+store_last_time = "updateTime"
+store_first_turn_member_num = "groupMember"
 date_format = "%Y-%m-%d %H:%M:%S"
 date_interval = 900
 
@@ -60,6 +60,16 @@ def get_user_info(user_remark_name):
 		return result.json()
 	else:
 		return
+
+def update_user_info(user_info):
+	url = base_api_url + "updateUserScripture?wechatUserId=" + user_info[store_name]
+	if user_info[store_nick_name]:
+		url = url + "&userName=" + user_info[store_nick_name]
+	if user_info[store_first_turn_member_num]:
+		url = url + "&groupMember=" + str(user_info[store_first_turn_member_num])
+	if user_info[store_last_file]:
+		url = url + "&jinDu=" + str(user_info[store_last_file])
+	result = requests.get(url)
 
 def log_to_mail(log_msg):
 	try:
@@ -116,10 +126,8 @@ def studyProgress(remark_name):
 	if not result:
 		return 1
 	else:
-		conf = configparser.ConfigParser()
-		conf.read(file)
-		last_file = int(conf.get(store_section, store_last_file))
-		time = conf.get(store_section, store_last_time)
+		last_file = int(result[store_last_file])
+		time = result[store_last_time]
 		last_time = datetime.datetime.strptime(time, date_format)
 		interval = datetime.datetime.now() - last_time
 		if last_file >= max_file:
@@ -130,31 +138,23 @@ def studyProgress(remark_name):
 			return last_file
 
 def recordPrgress(remark_name, nick_name, cur_file):
-	file = os.path.join(os.getcwd()+os.path.sep+user_path+os.path.sep+remark_name+".conf")
-	conf = configparser.ConfigParser()
-	if os.path.exists(file) :
-		conf.read(file)
-		last_file = int(conf.get(store_section, store_last_file))
+	result = get_user_info(remark_name)
+	if result:
+		last_file = int(result[store_last_file])
 		if last_file < cur_file :
-			conf.set(store_section, store_last_file, str(cur_file))
-			conf.set(store_section, store_last_time, datetime.datetime.now().strftime(date_format))
+			result[store_last_file] = str(cur_file)
+			update_user_info(result)
 	else:
-		conf.add_section(store_section)
-		conf.set(store_section, store_name, remark_name)
-		conf.set(store_section, store_nick_name, nick_name)
-		conf.set(store_section, store_last_file, str(cur_file))
-		conf.set(store_section, store_last_time, datetime.datetime.now().strftime(date_format))
-	conf.write(open(file,"w"))
+		result = {store_name: remark_name, store_nick_name: nick_name, store_last_file: str(cur_file) }
+		update_user_info(result)
 
 def studyProgressForGroup(name, cur_member):
-	file = os.path.join(os.getcwd()+os.path.sep+user_path+os.path.sep+name+".conf")
-	if not os.path.exists(file):
+	result = get_user_info(name)
+	if not result:
 		return 1
 	else:
-		conf = configparser.ConfigParser()
-		conf.read(file)
-		last_file = int(conf.get(store_section, store_last_file))
-		first_turn_member_num = int(conf.get(store_section, store_first_turn_member_num))
+		last_file = int(result[store_last_file])
+		first_turn_member_num = int(result[store_first_turn_member_num])
 		if cur_member - first_turn_member_num >= new_member_number:
 			return 1
 		elif last_file >= max_file:
@@ -163,21 +163,20 @@ def studyProgressForGroup(name, cur_member):
 		 	return last_file + 1
 
 def recordPrgressForGroup(name, cur_file, cur_member):
-	file = os.path.join(os.getcwd()+os.path.sep+user_path+os.path.sep+name+".conf")
-	conf = configparser.ConfigParser()
-	if os.path.exists(file) :
-		conf.read(file)
-		conf.set(store_section, store_last_file, str(cur_file))
-		conf.set(store_section, store_last_time, datetime.datetime.now().strftime(date_format))
+	result = get_user_info(name)
+	if result :
+		result[store_last_file] = str(cur_file)
 		if cur_file == 1 :
-			conf.set(store_section, store_first_turn_member_num, str(cur_member))		
+			result[store_first_turn_member_num] = str(cur_member)
+		update_user_info(result)	
 	else:
-		conf.add_section(store_section)
-		conf.set(store_section, store_name, name)
-		conf.set(store_section, store_last_file, str(cur_file))
-		conf.set(store_section, store_last_time, datetime.datetime.now().strftime(date_format))
-		conf.set(store_section, store_first_turn_member_num, str(cur_member))
-	conf.write(open(file,"w"))
+		result = {
+			store_name: name, 
+			store_nick_name: name,
+			store_last_file: str(cur_file),
+			store_first_turn_member_num: str(cur_member)
+		}
+		update_user_info(result)
 
 def get_article(seq=1):
 	for file in os.listdir(doc_path):
@@ -334,6 +333,21 @@ except Exception as e:
 # 		return "您输入的内容无法识别"
 
 #test
+# studyProgress("test")
+# studyProgress("test2")
+# studyProgress("wq") #0
+
+# recordPrgress("test", "test", 30) # test + 1
+# recordPrgress("test2", "test2", 100) # test2 + 1
+# recordPrgress("wq", "wq", 100) # test2 + 1
+
+# studyProgressForGroup("组1", 10)
+# recordPrgressForGroup("组1", 1, 10)
+# studyProgressForGroup("组1", 12)
+# recordPrgressForGroup("组1", 4, 12)
+# studyProgressForGroup("组1", 23)
+# recordPrgressForGroup("组1", 1, 23)
+
 # def reply_my_friend(msg,user):
 # 	msg_text = msg
 # 	#回复打招呼
