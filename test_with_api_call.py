@@ -68,7 +68,17 @@ def update_user_info(user_info):
 	if user_info[store_first_turn_member_num]:
 		url = url + "&groupMember=" + str(user_info[store_first_turn_member_num])
 	if user_info[store_last_file]:
-		url = url + "&jinDu=" + str(user_info[store_last_file])
+		url = url + "&jingWenJinDu=" + str(user_info[store_last_file])
+	result = requests.get(url)
+
+def reset_user_progress(user_info):
+	url = base_api_url + "updateUserDB?type=u&wechatUserId=" + user_info[store_name]
+	if user_info[store_nick_name]:
+		url = url + "&userName=" + user_info[store_nick_name]
+	if user_info[store_first_turn_member_num]:
+		url = url + "&groupMember=" + str(user_info[store_first_turn_member_num])
+	if user_info[store_last_file]:
+		url = url + "&jingWenJinDu=" + str(user_info[store_last_file])
 	result = requests.get(url)
 
 def log_to_mail(log_msg):
@@ -168,7 +178,9 @@ def recordPrgressForGroup(name, cur_file, cur_member):
 		result[store_last_file] = str(cur_file)
 		if cur_file == 1 :
 			result[store_first_turn_member_num] = str(cur_member)
-		update_user_info(result)	
+			reset_user_progress(result)
+		else:
+			update_user_info(result)	
 	else:
 		result = {
 			store_name: name, 
