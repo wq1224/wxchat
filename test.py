@@ -263,8 +263,8 @@ try:
 				group.send(reply_group_first)
 			else:
 				group.send(reply_group_continue.format(progress))
-				group.send_file(get_article(progress))
-				recordPrgressForGroup(group_name, progress, current_members)
+			group.send_file(get_article(progress))
+			recordPrgressForGroup(group_name, progress, current_members)
 			logging.warning("send " + str(progress) + " article to group " + group_name)	
 
 
