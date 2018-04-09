@@ -10,9 +10,9 @@ from apscheduler.schedulers.background import BackgroundScheduler
 import smtplib
 from email.message import EmailMessage
 import logging
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
                 #filename='wxchat.log'
-logging.getLogger('apscheduler').setLevel(logging.DEBUG)
+logging.getLogger('apscheduler').setLevel(logging.INFO)
 
 doc_path = "budda"
 user_path = "user"
@@ -62,12 +62,12 @@ def log_to_mail(log_msg):
 		s.login(mail, passwd)
 		s.send_message(msg)
 		logging.warning("发送成功")
-	except s.SMTPException as e:
+	except SMTPException as e:
 	    logging.warning("发送失败")
 
 def kill_process():
 	ps_str = os.popen("ps -ef | grep python3").read()
-	ps_strs = ps_str.split()
+	ps_strs = ps_str.splitlines()
 	for each_ps in ps_strs:
 		if "test.py" in each_ps:
 			ps_str = each_ps
@@ -268,7 +268,7 @@ try:
 			logging.warning("send " + str(progress) + " article to group " + group_name)	
 
 
-	@sched.scheduled_job('interval', minutes=15)
+	@sched.scheduled_job('interval', minutes=60)
 	def heart_beat():
 		try:
 			logging.warning("start scheduled_job to send msg to writer for heartbeat")
