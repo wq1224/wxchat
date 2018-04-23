@@ -31,7 +31,7 @@ store_first_turn_member_num = "groupMember"
 date_format = "%Y-%m-%d %H:%M:%S"
 date_interval = 900
 
-base_api_url = "http://106.14.0.107:8080/angular/"
+base_api_url = "http://106.14.0.107:80/angular/"
 
 for file in os.listdir(doc_path):
 	if "pdf" in file :
@@ -62,22 +62,20 @@ def get_user_info(user_remark_name):
 		return
 
 def update_user_info(user_info):
-	url = base_api_url + "updateUserScripture?wechatUserId=" + user_info[store_name]
-	if user_info[store_nick_name]:
-		url = url + "&userName=" + user_info[store_nick_name]
-	if user_info[store_first_turn_member_num]:
-		url = url + "&groupMember=" + str(user_info[store_first_turn_member_num])
-	if user_info[store_last_file]:
-		url = url + "&jingWenJinDu=" + str(user_info[store_last_file])
-	result = requests.get(url)
+	change_user_info(user_info,"u")
 
-def reset_user_progress(user_info):
-	url = base_api_url + "updateUserDB?type=u&wechatUserId=" + user_info[store_name]
-	if user_info[store_nick_name]:
+def insert_user_info(user_info):
+	change_user_info(user_info, "i")
+
+def change_user_info(user_info,sql_type):
+	url = base_api_url + "updateUserDB?wechatUserId=" + user_info[store_name]
+	url = url + "&type=" + sql_type
+	keys = user_info.keys()
+	if store_nick_name in keys:
 		url = url + "&userName=" + user_info[store_nick_name]
-	if user_info[store_first_turn_member_num]:
+	if store_first_turn_member_num in keys and user_info[store_first_turn_member_num] != 0:
 		url = url + "&groupMember=" + str(user_info[store_first_turn_member_num])
-	if user_info[store_last_file]:
+	if store_last_file in keys:
 		url = url + "&jingWenJinDu=" + str(user_info[store_last_file])
 	result = requests.get(url)
 
@@ -156,7 +154,7 @@ def recordPrgress(remark_name, nick_name, cur_file):
 			update_user_info(result)
 	else:
 		result = {store_name: remark_name, store_nick_name: nick_name, store_last_file: str(cur_file) }
-		update_user_info(result)
+		insert_user_info(result)
 
 def studyProgressForGroup(name, cur_member):
 	result = get_user_info(name)
@@ -178,9 +176,7 @@ def recordPrgressForGroup(name, cur_file, cur_member):
 		result[store_last_file] = str(cur_file)
 		if cur_file == 1 :
 			result[store_first_turn_member_num] = str(cur_member)
-			reset_user_progress(result)
-		else:
-			update_user_info(result)	
+		update_user_info(result)	
 	else:
 		result = {
 			store_name: name, 
@@ -188,7 +184,7 @@ def recordPrgressForGroup(name, cur_file, cur_member):
 			store_last_file: str(cur_file),
 			store_first_turn_member_num: str(cur_member)
 		}
-		update_user_info(result)
+		insert_user_info(result)
 
 def get_article(seq=1):
 	for file in os.listdir(doc_path):
@@ -286,8 +282,8 @@ try:
 				group.send(reply_group_first)
 			else:
 				group.send(reply_group_continue.format(progress))
-				group.send_file(get_article(progress))
-				recordPrgressForGroup(group_name, progress, current_members)
+			group.send_file(get_article(progress))
+			recordPrgressForGroup(group_name, progress, current_members)
 			logging.warning("send " + str(progress) + " article to group " + group_name)	
 
 
@@ -345,14 +341,15 @@ except Exception as e:
 # 		return "您输入的内容无法识别"
 
 #test
+# pdb.set_trace()
 # studyProgress("test")
 # studyProgress("test2")
-# studyProgress("wq") #0
+# studyProgress("wq") #1
 
 # recordPrgress("test", "test", 30) # test + 1
 # recordPrgress("test2", "test2", 100) # test2 + 1
 # recordPrgress("wq", "wq", 100) # test2 + 1
-
+# pdb.set_trace()
 # studyProgressForGroup("组1", 10)
 # recordPrgressForGroup("组1", 1, 10)
 # studyProgressForGroup("组1", 12)
