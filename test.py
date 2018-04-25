@@ -214,7 +214,6 @@ try:
 	sched = BackgroundScheduler()
 	@sched.scheduled_job('interval', id="qrcode_check", seconds=60)
 	def qrcode_check():
-		pdb.set_trace()
 		global md5
 		if os.path.exists(qrcode_file):
 			temp_md5 = md5sum(qrcode_file)
