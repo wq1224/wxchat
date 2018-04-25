@@ -9,7 +9,11 @@ import time
 from apscheduler.schedulers.background import BackgroundScheduler
 import smtplib
 from email.message import EmailMessage
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.image import MIMEImage
 import logging
+import hashlib
 logging.basicConfig(level=logging.INFO)
                 #filename='wxchat.log'
 logging.getLogger('apscheduler').setLevel(logging.INFO)
@@ -18,6 +22,7 @@ doc_path = "budda"
 user_path = "user"
 max_file = 1
 new_member_number = 10
+qrcode_file = "QR.png"
 #result = ""
 store_section = "progress"
 store_name = "name"
@@ -27,6 +32,7 @@ store_last_time = "last_time"
 store_first_turn_member_num = "first_turn_member_num"
 date_format = "%Y-%m-%d %H:%M:%S"
 date_interval = 900
+md5 = "md5"
 
 for file in os.listdir(doc_path):
 	if "pdf" in file :
@@ -49,20 +55,34 @@ reply_group_first = "大家好，我是灯灯，今天开始我们从头开始�
 reply_group_continue = "大家好，我是灯灯，今天我们继续学习佛学讲义。下面将分享第{0}章内容。"
 #reply_next.format("a","b","c")
 
-def log_to_mail(log_msg):
+def log_to_mail(log_msg,image_file=None):
 	try:
 		mail = "337569887@qq.com"
+		mail_to = "337569887@qq.com;linqifg@163.com"
 		passwd = "ddtgzhtuejxpbjig"
-		msg = EmailMessage()
-		msg.set_content(log_msg)
+		msg = MIMEMultipart('related')
+		html_content = "<h3>" + log_msg + "</h3>"
+		if image_file:
+			fp = open(image_file, 'rb')
+			msgImage = MIMEImage(fp.read())
+			fp.close()
+			msgImage.add_header('Content-Disposition', 'attachment', filename=image_file)
+			msgImage.add_header('Content-ID', '<0>')
+			msg.attach(msgImage)
+			html_content += "<img src=\"cid:0\"/>"
+		#msg = EmailMessage()
+		#msg.set_content(log_msg)
+		msgText = MIMEText(html_content, 'html', 'utf-8')
+		msg.attach(msgText)
 		msg['Subject'] = log_msg
 		msg['From'] = mail
-		msg['To'] = mail
+		msg['To'] = mail_to
 		s = smtplib.SMTP_SSL("smtp.qq.com",465)
 		s.login(mail, passwd)
+		#s.send(sender, receiver, msgRoot.as_string())
 		s.send_message(msg)
 		logging.warning("发送成功")
-	except SMTPException as e:
+	except smtplib.SMTPException as e:
 	    logging.warning("发送失败")
 
 def kill_process():
@@ -73,6 +93,17 @@ def kill_process():
 			ps_str = each_ps
 	pid = ps_str.split()[1]
 	os.system("kill -9 " + pid)
+
+                                  
+def md5sum(filename):
+  with open(filename, mode='rb') as f:
+    d = hashlib.md5()
+    while True:
+      buf = f.read(4096) # 128 is smaller than the typical filesystem block
+      if not buf:
+        break
+      d.update(buf)
+    return d.hexdigest()
 
 def get_user_remark_name(pinyin):
 	user_name = re.sub('\W+','', pinyin)
@@ -180,7 +211,22 @@ def get_article(seq=1):
 
 try:
 	log_to_mail("system start now")
-	bot = Bot(cache_path=True,console_qr=True)
+	sched = BackgroundScheduler()
+	@sched.scheduled_job('interval', id="qrcode_check", seconds=60)
+	def qrcode_check():
+		pdb.set_trace()
+		global md5
+		if os.path.exists(qrcode_file):
+			temp_md5 = md5sum(qrcode_file)
+			if temp_md5 != md5:
+				log_to_mail("Dengdeng need login, please scan qr code", qrcode_file)
+				md5 = temp_md5
+
+	sched.start()
+	bot = Bot(cache_path=True,console_qr=False)
+	if os.path.exists(qrcode_file):
+		os.remove(qrcode_file)
+	sched.remove_job("qrcode_check")
 	# filepath = os.path.join(os.getcwd()+os.path.sep+path+os.path.sep+file[0:file.rindex(".")])
 	# bot.file_helper.send_file(filepath+".pdf")
 	# bot.file_helper.send_file(filepath+".docx")
@@ -248,7 +294,7 @@ try:
 				return reply_ask_next.format(msg.sender.nick_name, progress-1, progress)
 
 
-	sched = BackgroundScheduler()
+	#sched = BackgroundScheduler()
 		
 	@sched.scheduled_job('cron', day_of_week='mon-sun', hour=20)
 	def scheduled_job():
@@ -285,17 +331,15 @@ try:
 			kill_process()
 			sys.exit();
 
-	# @sched.scheduled_job('interval', seconds=20)
-	# def heart_beat_alive():
-	# 	logging.warning("alive:" + str(bot.alive))
-	# 	if not bot.alive:
-	# 		logging.warning("not alive, send email")
-	# 		log_to_mail("dengdeng not alive now")
-	# 		sys.exit();
-	# 	else:
-	# 		logging.warning("alive, continue")
-
-	sched.start()
+	@sched.scheduled_job('interval', seconds=20)
+	def heart_beat_alive():
+		logging.warning("alive:" + str(bot.alive))
+		if not bot.alive:
+			logging.warning("not alive, send email")
+			log_to_mail("dengdeng not alive now")
+			sys.exit();
+		else:
+			logging.warning("alive, continue")
 
 	bot.join()
 
