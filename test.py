@@ -18,11 +18,14 @@ logging.basicConfig(level=logging.INFO)
                 #filename='wxchat.log'
 logging.getLogger('apscheduler').setLevel(logging.INFO)
 
+qrcode_dir = "/usr/java/tomcat/apache-tomcat-8.5.16/webapps/angular/"
+qrcode_file = "QR.png"
+url = "http://106.14.0.107/angular/QR.png"
 doc_path = "budda"
 user_path = "user"
 max_file = 1
 new_member_number = 10
-qrcode_file = "QR.png"
+
 #result = ""
 store_section = "progress"
 store_name = "name"
@@ -31,8 +34,9 @@ store_last_file = "last_file"
 store_last_time = "last_time"
 store_first_turn_member_num = "first_turn_member_num"
 date_format = "%Y-%m-%d %H:%M:%S"
-date_interval = 900
+date_interval = 10
 md5 = "md5"
+sent = False
 
 for file in os.listdir(doc_path):
 	if "pdf" in file :
@@ -215,16 +219,19 @@ try:
 	@sched.scheduled_job('interval', id="qrcode_check", seconds=60)
 	def qrcode_check():
 		global md5
-		if os.path.exists(qrcode_file):
-			temp_md5 = md5sum(qrcode_file)
-			if temp_md5 != md5:
-				log_to_mail("Dengdeng need login, please scan qr code", qrcode_file)
-				md5 = temp_md5
+		global sent
+		if os.path.exists(qrcode_dir + qrcode_file):
+			#temp_md5 = md5sum(qrcode_file)
+			#if temp_md5 != md5:
+			if not sent
+				log_to_mail("Dengdeng need login, please scan qr code " + url)
+				sent = True
+				#md5 = temp_md5
 
 	sched.start()
-	bot = Bot(cache_path=True,console_qr=False)
-	if os.path.exists(qrcode_file):
-		os.remove(qrcode_file)
+	bot = Bot(cache_path=True,console_qr=False, qr_path=qrcode_dir)
+	if os.path.exists(qrcode_dir + qrcode_file):
+		os.remove(qrcode_dir + qrcode_file)
 	sched.remove_job("qrcode_check")
 	# filepath = os.path.join(os.getcwd()+os.path.sep+path+os.path.sep+file[0:file.rindex(".")])
 	# bot.file_helper.send_file(filepath+".pdf")
