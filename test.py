@@ -223,7 +223,7 @@ try:
 		if os.path.exists(qrcode_dir + qrcode_file):
 			#temp_md5 = md5sum(qrcode_file)
 			#if temp_md5 != md5:
-			if not sent
+			if not sent:
 				log_to_mail("Dengdeng need login, please scan qr code " + url)
 				sent = True
 				#md5 = temp_md5
