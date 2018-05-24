@@ -20,20 +20,29 @@ logging.getLogger('apscheduler').setLevel(logging.INFO)
 
 qrcode_file = "/usr/java/tomcat/apache-tomcat-8.5.16/webapps/angular/QR.png"
 url = "http://106.14.0.107/angular/QR.png"
+base_api_url = "http://106.14.0.107:80/angular/"
+
 doc_path = "budda"
 user_path = "user"
 max_file = 1
 new_member_number = 10
-
-#result = ""
-store_section = "progress"
-store_name = "name"
-store_nick_name = "nick_name"
-store_last_file = "last_file"
-store_last_time = "last_time"
-store_first_turn_member_num = "first_turn_member_num"
 date_format = "%Y-%m-%d %H:%M:%S"
 date_interval = 10
+
+file_store_section = "progress"
+file_store_name = "name"
+file_store_nick_name = "nick_name"
+file_store_last_file = "last_file"
+file_store_last_time = "last_time"
+file_store_first_turn_member_num = "first_turn_member_num"
+
+store_section = "progress"
+store_name = "wechatUserId"
+store_nick_name = "userName"
+store_last_file = "jinDu"
+store_last_time = "updateTime"
+store_first_turn_member_num = "groupMember"
+
 md5 = "md5"
 sent = False
 
@@ -57,6 +66,30 @@ reply_no_permission = "您现在还没学到这一章哦，只能学习前{0}章
 reply_group_first = "大家好，我是灯灯，今天开始我们从头开始学习佛学讲义。下面将分享第1章内容。"
 reply_group_continue = "大家好，我是灯灯，今天我们继续学习佛学讲义。下面将分享第{0}章内容。"
 #reply_next.format("a","b","c")
+def get_user_info(user_remark_name):
+	result = requests.get(base_api_url + "getWechatUser?wechatUserId=" + user_remark_name)
+	if  result.text.strip(): 
+		return result.json()
+	else:
+		return
+
+def update_user_info(user_info):
+	change_user_info(user_info,"u")
+
+def insert_user_info(user_info):
+	change_user_info(user_info, "i")
+
+def change_user_info(user_info,sql_type):
+	url = base_api_url + "updateUserDB?wechatUserId=" + user_info[store_name]
+	url = url + "&type=" + sql_type
+	keys = user_info.keys()
+	if store_nick_name in keys:
+		url = url + "&userName=" + user_info[store_nick_name]
+	if store_first_turn_member_num in keys and user_info[store_first_turn_member_num] != 0:
+		url = url + "&groupMember=" + str(user_info[store_first_turn_member_num])
+	if store_last_file in keys:
+		url = url + "&jingWenJinDu=" + str(user_info[store_last_file])
+	result = requests.get(url)
 
 def log_to_mail(log_msg,image_file=None):
 	try:
@@ -108,6 +141,141 @@ def md5sum(filename):
       d.update(buf)
     return d.hexdigest()
 
+# def studyProgress(remark_name):
+# 	file = os.path.join(os.getcwd()+os.path.sep+user_path+os.path.sep+remark_name+".conf")
+# 	if not os.path.exists(file):
+# 		return 1
+# 	else:
+# 		conf = configparser.ConfigParser()
+# 		conf.read(file)
+# 		last_file = int(conf.get(file_store_section, file_store_last_file))
+# 		time = conf.get(file_store_section, file_store_last_time)
+# 		last_time = datetime.datetime.strptime(time, date_format)
+# 		interval = datetime.datetime.now() - last_time
+# 		if last_file >= max_file:
+# 			return max_file
+# 		elif interval.seconds > date_interval:
+# 			return last_file + 1
+# 		else:
+# 			return last_file
+
+# def recordPrgress(remark_name, nick_name, cur_file):
+# 	file = os.path.join(os.getcwd()+os.path.sep+user_path+os.path.sep+remark_name+".conf")
+# 	conf = configparser.ConfigParser()
+# 	if os.path.exists(file) :
+# 		conf.read(file)
+# 		last_file = int(conf.get(file_store_section, file_store_last_file))
+# 		if last_file < cur_file :
+# 			conf.set(file_store_section, file_store_last_file, str(cur_file))
+# 			conf.set(file_store_section, file_store_last_time, datetime.datetime.now().strftime(date_format))
+# 	else:
+# 		conf.add_section(file_store_section)
+# 		conf.set(file_store_section, file_store_name, remark_name)
+# 		conf.set(file_store_section, file_store_nick_name, nick_name)
+# 		conf.set(file_store_section, file_store_last_file, str(cur_file))
+# 		conf.set(file_store_section, file_store_last_time, datetime.datetime.now().strftime(date_format))
+# 	conf.write(open(file,"w"))
+
+# def studyProgressForGroup(name, cur_member):
+# 	file = os.path.join(os.getcwd()+os.path.sep+user_path+os.path.sep+name+".conf")
+# 	if not os.path.exists(file):
+# 		return 1
+# 	else:
+# 		conf = configparser.ConfigParser()
+# 		conf.read(file)
+# 		last_file = int(conf.get(file_store_section, file_store_last_file))
+# 		first_turn_member_num = int(conf.get(file_store_section, file_store_first_turn_member_num))
+# 		if cur_member - first_turn_member_num >= new_member_number:
+# 			return 1
+# 		elif last_file >= max_file:
+# 			return 1
+# 		else:
+# 		 	return last_file + 1
+
+# def recordPrgressForGroup(name, cur_file, cur_member):
+# 	file = os.path.join(os.getcwd()+os.path.sep+user_path+os.path.sep+name+".conf")
+# 	conf = configparser.ConfigParser()
+# 	if os.path.exists(file) :
+# 		conf.read(file)
+# 		conf.set(file_store_section, file_store_last_file, str(cur_file))
+# 		conf.set(file_store_section, file_store_last_time, datetime.datetime.now().strftime(date_format))
+# 		if cur_file == 1 :
+# 			conf.set(file_store_section, file_store_first_turn_member_num, str(cur_member))		
+# 	else:
+# 		conf.add_section(file_store_section)
+# 		conf.set(file_store_section, file_store_name, name)
+# 		conf.set(file_store_section, file_store_last_file, str(cur_file))
+# 		conf.set(file_store_section, file_store_last_time, datetime.datetime.now().strftime(date_format))
+# 		conf.set(file_store_section, file_store_first_turn_member_num, str(cur_member))
+# 	conf.write(open(file,"w"))
+
+def studyProgress(remark_name):
+	result = get_user_info(remark_name)
+	if not result:
+		return 1
+	else:
+		last_file = int(result[store_last_file])
+		time = result[store_last_time]
+		last_time = datetime.datetime.strptime(time, date_format)
+		interval = datetime.datetime.now() - last_time
+		if last_file >= max_file:
+			return max_file
+		elif interval.seconds > date_interval:
+			return last_file + 1
+		else:
+			return last_file
+
+def recordPrgress(remark_name, nick_name, cur_file):
+	result = get_user_info(remark_name)
+	if result:
+		last_file = int(result[store_last_file])
+		if last_file < cur_file :
+			result[store_last_file] = str(cur_file)
+			update_user_info(result)
+	else:
+		result = {store_name: remark_name, store_nick_name: nick_name, store_last_file: str(cur_file) }
+		insert_user_info(result)
+
+def studyProgressForGroup(name, cur_member):
+	result = get_user_info(name)
+	if not result:
+		return 1
+	else:
+		last_file = int(result[store_last_file])
+		first_turn_member_num = int(result[store_first_turn_member_num])
+		if cur_member - first_turn_member_num >= new_member_number:
+			return 1
+		elif last_file >= max_file:
+			return 1
+		else:
+		 	return last_file + 1
+
+def recordPrgressForGroup(name, cur_file, cur_member):
+	result = get_user_info(name)
+	if result :
+		result[store_last_file] = str(cur_file)
+		if cur_file == 1 :
+			result[store_firstresult = {
+			store_name: name, 
+			store_nick_name: name,
+			store_last_file: str(cur_file),
+			store_first_turn_member_num: str(cur_member)
+		}_turn_member_num] = str(cur_member)
+		update_user_info(result)	
+	else:	
+		insert_user_info(result)
+
+def get_article(seq=1):
+	for file in os.listdir(doc_path):
+		if "pdf" in file :
+			file_seq = int(file.split(".")[0])
+			if seq == file_seq:
+				filepath = os.path.join(os.getcwd()+os.path.sep+doc_path+os.path.sep+file[0:file.rindex(".")])
+				#msg.sender.send_file(filepath+".pdf")
+				#msg.sender.send_file(filepath+".docx")
+				return filepath+".pdf"
+	return
+
 def get_user_remark_name(pinyin):
 	user_name = re.sub('\W+','', pinyin)
 	return str(int(time.time())) + user_name
@@ -132,85 +300,6 @@ def str2num(str):
 		return int(str)
 	except ValueError:
 		return 0
-
-def studyProgress(remark_name):
-	file = os.path.join(os.getcwd()+os.path.sep+user_path+os.path.sep+remark_name+".conf")
-	if not os.path.exists(file):
-		return 1
-	else:
-		conf = configparser.ConfigParser()
-		conf.read(file)
-		last_file = int(conf.get(store_section, store_last_file))
-		time = conf.get(store_section, store_last_time)
-		last_time = datetime.datetime.strptime(time, date_format)
-		interval = datetime.datetime.now() - last_time
-		if last_file >= max_file:
-			return max_file
-		elif interval.seconds > date_interval:
-			return last_file + 1
-		else:
-			return last_file
-
-def recordPrgress(remark_name, nick_name, cur_file):
-	file = os.path.join(os.getcwd()+os.path.sep+user_path+os.path.sep+remark_name+".conf")
-	conf = configparser.ConfigParser()
-	if os.path.exists(file) :
-		conf.read(file)
-		last_file = int(conf.get(store_section, store_last_file))
-		if last_file < cur_file :
-			conf.set(store_section, store_last_file, str(cur_file))
-			conf.set(store_section, store_last_time, datetime.datetime.now().strftime(date_format))
-	else:
-		conf.add_section(store_section)
-		conf.set(store_section, store_name, remark_name)
-		conf.set(store_section, store_nick_name, nick_name)
-		conf.set(store_section, store_last_file, str(cur_file))
-		conf.set(store_section, store_last_time, datetime.datetime.now().strftime(date_format))
-	conf.write(open(file,"w"))
-
-def studyProgressForGroup(name, cur_member):
-	file = os.path.join(os.getcwd()+os.path.sep+user_path+os.path.sep+name+".conf")
-	if not os.path.exists(file):
-		return 1
-	else:
-		conf = configparser.ConfigParser()
-		conf.read(file)
-		last_file = int(conf.get(store_section, store_last_file))
-		first_turn_member_num = int(conf.get(store_section, store_first_turn_member_num))
-		if cur_member - first_turn_member_num >= new_member_number:
-			return 1
-		elif last_file >= max_file:
-			return 1
-		else:
-		 	return last_file + 1
-
-def recordPrgressForGroup(name, cur_file, cur_member):
-	file = os.path.join(os.getcwd()+os.path.sep+user_path+os.path.sep+name+".conf")
-	conf = configparser.ConfigParser()
-	if os.path.exists(file) :
-		conf.read(file)
-		conf.set(store_section, store_last_file, str(cur_file))
-		conf.set(store_section, store_last_time, datetime.datetime.now().strftime(date_format))
-		if cur_file == 1 :
-			conf.set(store_section, store_first_turn_member_num, str(cur_member))		
-	else:
-		conf.add_section(store_section)
-		conf.set(store_section, store_name, name)
-		conf.set(store_section, store_last_file, str(cur_file))
-		conf.set(store_section, store_last_time, datetime.datetime.now().strftime(date_format))
-		conf.set(store_section, store_first_turn_member_num, str(cur_member))
-	conf.write(open(file,"w"))
-
-def get_article(seq=1):
-	for file in os.listdir(doc_path):
-		if "pdf" in file :
-			file_seq = int(file.split(".")[0])
-			if seq == file_seq:
-				filepath = os.path.join(os.getcwd()+os.path.sep+doc_path+os.path.sep+file[0:file.rindex(".")])
-				#msg.sender.send_file(filepath+".pdf")
-				#msg.sender.send_file(filepath+".docx")
-				return filepath+".pdf"
-	return
 
 try:
 	log_to_mail("system start now")
@@ -316,7 +405,23 @@ try:
 				group.send(reply_group_continue.format(progress))
 			group.send_file(get_article(progress))
 			recordPrgressForGroup(group_name, progress, current_members)
-			logging.warning("send " + str(progress) + " article to group " + group_name)	
+			logging.warning("send " + str(progress) + " article to group " + group_name)
+
+	@sched.scheduled_job('interval', minutes=3)
+	def scheduled_job():
+		logging.warning("start scheduled_job to send articles to group")
+		group = bot.groups().search('测试灯灯')[0]
+		logging.warning("get groups name over")
+		current_members = len(group.members)
+		group_name = group.name
+		progress = studyProgressForGroup(group_name,current_members)
+		if progress == 1:
+			group.send(reply_group_first)
+		else:
+			group.send(reply_group_continue.format(progress))
+		group.send_file(get_article(progress))
+		recordPrgressForGroup(group_name, progress, current_members)
+		logging.warning("send " + str(progress) + " article to group " + group_name)	
 
 
 	@sched.scheduled_job('interval', minutes=60)
@@ -353,6 +458,7 @@ except ResponseError as r:
 	log_to_mail("dengdeng encounter ResponseError")
 	sys.exit();
 except Exception as e:
+	print(e)
 	logging.warning("encounter Exception")
 	log_to_mail("dengdeng encounter Exception")
 	sys.exit();
