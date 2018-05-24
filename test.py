@@ -255,14 +255,15 @@ def recordPrgressForGroup(name, cur_file, cur_member):
 	if result :
 		result[store_last_file] = str(cur_file)
 		if cur_file == 1 :
-			result[store_firstresult = {
+			result[store_first_turn_member_num] = str(cur_member)
+		update_user_info(result)	
+	else:
+		result = {
 			store_name: name, 
 			store_nick_name: name,
 			store_last_file: str(cur_file),
 			store_first_turn_member_num: str(cur_member)
-		}_turn_member_num] = str(cur_member)
-		update_user_info(result)	
-	else:	
+		}
 		insert_user_info(result)
 
 def get_article(seq=1):
