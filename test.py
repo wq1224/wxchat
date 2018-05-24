@@ -315,7 +315,7 @@ try:
 			#temp_md5 = md5sum(qrcode_file)
 			#if temp_md5 != md5:
 			if not sent:
-				log_to_mail("Dengdeng need login, please scan qr code " + url)
+				log_to_mail("Dengdeng need login, please scan qr code <a>" + url + "</a>")
 				sent = True
 				#md5 = temp_md5
 
