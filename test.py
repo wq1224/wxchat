@@ -18,8 +18,7 @@ logging.basicConfig(level=logging.INFO)
                 #filename='wxchat.log'
 logging.getLogger('apscheduler').setLevel(logging.INFO)
 
-qrcode_dir = "/usr/java/tomcat/apache-tomcat-8.5.16/webapps/angular/"
-qrcode_file = "QR.png"
+qrcode_file = "/usr/java/tomcat/apache-tomcat-8.5.16/webapps/angular/QR.png"
 url = "http://106.14.0.107/angular/QR.png"
 doc_path = "budda"
 user_path = "user"
@@ -220,7 +219,7 @@ try:
 	def qrcode_check():
 		global md5
 		global sent
-		if os.path.exists(qrcode_dir + qrcode_file):
+		if os.path.exists(qrcode_file):
 			#temp_md5 = md5sum(qrcode_file)
 			#if temp_md5 != md5:
 			if not sent:
@@ -229,9 +228,9 @@ try:
 				#md5 = temp_md5
 
 	sched.start()
-	bot = Bot(cache_path=True,console_qr=False, qr_path=qrcode_dir)
-	if os.path.exists(qrcode_dir + qrcode_file):
-		os.remove(qrcode_dir + qrcode_file)
+	bot = Bot(cache_path=True,console_qr=False, qr_path=qrcode_file)
+	if os.path.exists(qrcode_file):
+		os.remove(qrcode_file)
 	sched.remove_job("qrcode_check")
 	# filepath = os.path.join(os.getcwd()+os.path.sep+path+os.path.sep+file[0:file.rindex(".")])
 	# bot.file_helper.send_file(filepath+".pdf")
