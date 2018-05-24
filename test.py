@@ -14,6 +14,8 @@ from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
 import logging
 import hashlib
+import requests
+import json
 logging.basicConfig(level=logging.INFO)
                 #filename='wxchat.log'
 logging.getLogger('apscheduler').setLevel(logging.INFO)
