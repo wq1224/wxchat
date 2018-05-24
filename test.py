@@ -411,7 +411,7 @@ try:
 			logging.warning("send " + str(progress) + " article to group " + group_name)
 
 	@sched.scheduled_job('interval', minutes=3)
-	def scheduled_job():
+	def scheduled_job_test():
 		logging.warning("start scheduled_job to send articles to group")
 		group = bot.groups().search('测试灯灯')[0]
 		logging.warning("get groups name over")
@@ -444,15 +444,15 @@ try:
 			kill_process()
 			sys.exit();
 
-	@sched.scheduled_job('interval', seconds=20)
-	def heart_beat_alive():
-		logging.warning("alive:" + str(bot.alive))
-		if not bot.alive:
-			logging.warning("not alive, send email")
-			log_to_mail("dengdeng not alive now")
-			sys.exit();
-		else:
-			logging.warning("alive, continue")
+	# @sched.scheduled_job('interval', seconds=20)
+	# def heart_beat_alive():
+	# 	logging.warning("alive:" + str(bot.alive))
+	# 	if not bot.alive:
+	# 		logging.warning("not alive, send email")
+	# 		log_to_mail("dengdeng not alive now")
+	# 		sys.exit();
+	# 	else:
+	# 		logging.warning("alive, continue")
 
 	bot.join()
 
