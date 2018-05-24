@@ -410,21 +410,21 @@ try:
 			recordPrgressForGroup(group_name, progress, current_members)
 			logging.warning("send " + str(progress) + " article to group " + group_name)
 
-	@sched.scheduled_job('interval', minutes=3)
-	def scheduled_job_test():
-		logging.warning("start scheduled_job to send articles to group")
-		group = bot.groups().search('测试灯灯')[0]
-		logging.warning("get groups name over")
-		current_members = len(group.members)
-		group_name = group.name
-		progress = studyProgressForGroup(group_name,current_members)
-		if progress == 1:
-			group.send(reply_group_first)
-		else:
-			group.send(reply_group_continue.format(progress))
-		group.send_file(get_article(progress))
-		recordPrgressForGroup(group_name, progress, current_members)
-		logging.warning("send " + str(progress) + " article to group " + group_name)	
+	# @sched.scheduled_job('interval', minutes=3)
+	# def scheduled_job_test():
+	# 	logging.warning("start scheduled_job to send articles to group")
+	# 	group = bot.groups().search('测试灯灯')[0]
+	# 	logging.warning("get groups name over")
+	# 	current_members = len(group.members)
+	# 	group_name = group.name
+	# 	progress = studyProgressForGroup(group_name,current_members)
+	# 	if progress == 1:
+	# 		group.send(reply_group_first)
+	# 	else:
+	# 		group.send(reply_group_continue.format(progress))
+	# 	group.send_file(get_article(progress))
+	# 	recordPrgressForGroup(group_name, progress, current_members)
+	# 	logging.warning("send " + str(progress) + " article to group " + group_name)	
 
 
 	@sched.scheduled_job('interval', minutes=60)
