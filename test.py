@@ -20,8 +20,8 @@ logging.basicConfig(level=logging.INFO)
                 #filename='wxchat.log'
 logging.getLogger('apscheduler').setLevel(logging.INFO)
 
-qrcode_file = "/usr/java/tomcat/apache-tomcat-8.5.16/webapps/angular/QR.png"
-url = "http://106.14.0.107/angular/QR.png"
+qrcode_file = "/usr/java/tomcat/apache-tomcat-8.5.16/webapps/scriptures/QR.png"
+url = "http://106.14.0.107/scriptures/QR.png"
 base_api_url = "http://106.14.0.107:80/angular/"
 
 doc_path = "budda"
