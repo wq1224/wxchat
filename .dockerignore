@@ -2,3 +2,4 @@
 !budda/*
 !test.py
 !requirements.txt
+!docker-entrypoint.sh

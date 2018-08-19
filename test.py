@@ -24,6 +24,11 @@ qrcode_file = "/usr/java/tomcat/apache-tomcat-8.5.16/webapps/scriptures/QR.png"
 url = "http://106.14.0.107/scriptures/QR.png"
 base_api_url = "http://106.14.0.107:80/angular/"
 
+if os.getenv("QRCODE_FILE") and os.getenv("QRCODE_URL") and os.getenv("API_URL"):
+  qrcode_file = os.getenv("QRCODE_FILE")
+  url = os.getenv("QRCODE_URL")
+  base_api_url = os.getenv("API_URL")
+
 doc_path = "budda"
 user_path = "user"
 max_file = 1
