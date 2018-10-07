@@ -1,8 +1,7 @@
-#!/bin/sh
-set -eo pipefail
+#!/bin/bash
+set -e
 shopt -s nullglob
 
 supervisord -c ~/supervisord.conf
-supervisorctl start wxchat
 
 exec "$@"
