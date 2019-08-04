@@ -65,8 +65,8 @@ for file in os.listdir(doc_path):
 # 		result += sep[0] + os.linesep
 
 reply_accept = "您好，{0}，我是灯灯，感谢您关注灯灯哦。试着给我打个招呼吧。"
-reply_ask_first = "您好，{0}，我是灯灯，现在我可以提供佛学的讲义给您，请问您是否需要开始学习？(如需要请回复是或者需要，否则请回复任意其他内容)"
-reply_ask_next = "您好，{0}，我这边显示您已经学完了前{1}章呢，真了不起，您已经可以开始学习第{2}章了哟，您现在想学习第几章？(如需要请回复章节号，如第{2}章，否则请回复任意其他内容)"
+reply_ask_first = "您好，{0}，我是灯灯，现在我可以提供佛学的讲义给您，目前一共有{1}章内容，您现在想学习第几章？(如需要请回复章节号，如第1章，否则请回复再见，回复“目录”可以查看所有文章目录。"
+reply_ask_next = "您好，{0}，我这边显示您已经学完了前{1}章呢，真了不起，目前一共有{2}章内容，您现在想学习第几章？(如需要请回复章节号，如第{2}章，否则请回复再见，回复“目录”可以查看所有文章目录。"
 reply_no_need = "您现在不需要的话，那就有需要的时候再找灯灯了哦，灯灯先去服务其它佛友同修了哦！^_^ (如有需要请再次给我打招呼哦)"
 reply_no_permission = "您现在还没学到这一章哦，只能学习前{0}章的内容。"
 
@@ -97,6 +97,16 @@ def change_user_info(user_info,sql_type):
 	if store_last_file in keys:
 		url = url + "&jingWenJinDu=" + str(user_info[store_last_file])
 	result = requests.get(url)
+
+def list_files():
+	files = os.listdir(doc_path)
+	files = list( filter( lambda file_name: "pdf" in file_name , files ) )
+	files.sort( key = lambda file_name:int(file_name.split(".")[0]) )
+	str = u"目录"
+	for file in files:
+		str += '\n' + file
+	max_file = len(files)
+	return str
 
 def log_to_mail(log_msg,image_file=None):
 	try:
@@ -227,8 +237,8 @@ def studyProgress(remark_name):
 		interval = datetime.datetime.now() - last_time
 		if last_file >= max_file:
 			return max_file
-		elif interval.seconds > date_interval:
-			return last_file + 1
+		# elif interval.seconds > date_interval:
+		# 	return last_file + 1
 		else:
 			return last_file
 
@@ -294,6 +304,12 @@ def isSayHello(msg):
 def isFirstNeed(msg):
 	return ("是" in msg or "需要" in msg) and ("不" not in msg)
 
+def isDictionary(msg):
+	return ("目录" in msg)
+
+def isSayBye(msg):
+	return "再见" in msg or "Bye" in msg or "拜拜" in msg or "bye" in msg
+
 def isNextNumber(msg):
 	msg_number = msg.strip()
 	m = re.search("第(.*)(章|讲)", msg_number)
@@ -352,7 +368,6 @@ try:
 	    new_friend.send(reply_accept.format(new_friend.nick_name))
 	    logging.warning("sent hello to new friend " + remark_name)
 
-	have_asked = {}
 	# 回复 my_friend 的消息 (优先匹配后注册的函数!)
 	#@bot.register(my_friend)
 	@bot.register(Friend, TEXT)
@@ -360,44 +375,31 @@ try:
 		msg_text = msg.text.strip()
 		user = msg.sender.remark_name
 		logging.warning("ready to reply to friend " + user)
-		if user not in have_asked:
-			have_asked[user] = False
-		#如果提问过
-		if have_asked[user]:
-			have_asked[user] = False
-			#回复第一章(只有第一章的回复为是,否)
-			if isFirstNeed(msg_text):
-				recordPrgress(user,msg.sender.nick_name, 1)
-				msg.sender.send_file(get_article(1))
-				logging.warning("replied the first article to " + user)
-				return
-			#回复后续章
-			next_number = isNextNumber(msg_text)
-			if next_number !=0 :
-				progress = studyProgress(user)
-				if (progress >= next_number):
-					recordPrgress(user, msg.sender.nick_name, next_number)
-					msg.sender.send_file(get_article(next_number))
-					logging.warning("replied " + str(next_number) + " article to " + user)
-					return
-				else:
-					logging.warning("will reply no pemission for " + str(next_number) + " article to " + user)
-					return reply_no_permission.format(progress)
-			logging.warning("will reply no need to " + user)
-			return reply_no_need
-
-		else:
-			logging.warning("will reply question to " + user)
-			have_asked[user] = True
+		# 请求目录
+		if isDictionary(msg_text):
+			return list_files()
+		# 请求文章
+		next_number = isNextNumber(msg_text)
+		if next_number !=0 :
+			msg.sender.send_file(get_article(next_number))
+			logging.warning("replied " + str(next_number) + " article to " + user)
 			progress = studyProgress(user)
-			if 1 == progress:
-				return reply_ask_first.format(msg.sender.nick_name)
-			else:
-				return reply_ask_next.format(msg.sender.nick_name, progress-1, progress)
+			if (progress < next_number):
+				recordPrgress(user, msg.sender.nick_name, next_number)
+			return
+		# 再见
+		if isSayBye(msg_text):
+			return reply_no_need
+		# 其他情况
+		progress = studyProgress(user)
+		if 1 == progress:
+			return reply_ask_first.format( msg.sender.nick_name, max_file )
+		else:
+			return reply_ask_next.format( msg.sender.nick_name, progress, max_file )
 
 
 	#sched = BackgroundScheduler()
-		
+
 	@sched.scheduled_job('cron', day_of_week='mon-sun', hour=20)
 	def scheduled_job():
 		logging.warning("start scheduled_job to send articles to group")
