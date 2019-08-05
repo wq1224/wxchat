@@ -16,6 +16,7 @@ import logging
 import hashlib
 import requests
 import json
+from itertools import groupby
 logging.basicConfig(level=logging.INFO)
                 #filename='wxchat.log'
 logging.getLogger('apscheduler').setLevel(logging.INFO)
