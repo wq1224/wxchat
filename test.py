@@ -398,7 +398,7 @@ try:
 		user = msg.sender.remark_name
 		logging.warning("ready to reply to friend " + user)
 		# 请求更新
-		if "更新文章" in msg:
+		if "更新文章" in msg_text:
 			dictionary_text = list_files()
 			return dictionary_text
 		# 请求目录
