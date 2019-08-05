@@ -52,6 +52,7 @@ store_first_turn_member_num = "groupMember"
 
 md5 = "md5"
 sent = False
+dictionary_text = ''
 
 for file in os.listdir(doc_path):
 	if "pdf" in file :
@@ -98,15 +99,35 @@ def change_user_info(user_info,sql_type):
 		url = url + "&jingWenJinDu=" + str(user_info[store_last_file])
 	result = requests.get(url)
 
-def list_files():
+def list_detail_files():
 	files = os.listdir(doc_path)
-	files = list( filter( lambda file_name: "pdf" in file_name , files ) )
+	files = list( filter( lambda file_name: "pdf" in file_name and "《" in file_name , files ) )
+	files.map
 	files.sort( key = lambda file_name:int(file_name.split(".")[0]) )
 	str = u"目录"
 	for file in files:
 		str += '\n' + file
 	max_file = len(files)
 	return str
+
+def list_files():
+    files = os.listdir(doc_path)
+    temp = list(filter(lambda file_name : "pdf" in file_name and "《" in file_name , files))
+    temp.sort(key = lambda file_name : int(file_name.split(".")[0]))
+    temp = map(lambda file_name : { "key" : re.search(r"《.*》",file_name).group(), "value" : int(file_name.split(".")[0]) }, temp)
+    temp = groupby(temp, lambda item : item["key"])
+    str_dic = u"目录"
+    for key,group in temp:
+        t = list(group)
+        start = str(t[0]["value"])
+        end = str(t[len(t)-1]["value"]) 
+        if start == end :
+            str_dic += '\n第' + start + "章 " + key
+        else :
+            str_dic += '\n第' + start + "-" + end + "章 " + key
+    return str_dic
+
+dictionary_text = list_files()
 
 def log_to_mail(log_msg,image_file=None):
 	try:
@@ -375,9 +396,13 @@ try:
 		msg_text = msg.text.strip()
 		user = msg.sender.remark_name
 		logging.warning("ready to reply to friend " + user)
+		# 请求更新
+		if "更新文章" in msg:
+			dictionary_text = list_files()
+			return dictionary_text
 		# 请求目录
 		if isDictionary(msg_text):
-			return list_files()
+			return dictionary_text
 		# 请求文章
 		next_number = isNextNumber(msg_text)
 		if next_number !=0 :
