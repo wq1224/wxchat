@@ -53,7 +53,6 @@ store_first_turn_member_num = "groupMember"
 
 md5 = "md5"
 sent = False
-dictionary_text = ''
 
 for file in os.listdir(doc_path):
 	if "pdf" in file :
