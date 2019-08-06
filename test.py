@@ -127,8 +127,6 @@ def list_files():
             str_dic += '\n第' + start + "-" + end + "章 " + key
     return str_dic
 
-dictionary_text = list_files()
-
 def log_to_mail(log_msg,image_file=None):
 	try:
 		mail = "337569887@qq.com"
@@ -396,12 +394,9 @@ try:
 		msg_text = msg.text.strip()
 		user = msg.sender.remark_name
 		logging.warning("ready to reply to friend " + user)
-		# 请求更新
-		if "更新文章" in msg_text:
-			dictionary_text = list_files()
-			return dictionary_text
 		# 请求目录
 		if isDictionary(msg_text):
+			dictionary_text = list_files()
 			return dictionary_text
 		# 请求文章
 		next_number = isNextNumber(msg_text)
