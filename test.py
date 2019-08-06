@@ -110,21 +110,28 @@ def list_detail_files():
 	max_file = len(files)
 	return str
 
+def filename_match(file_name):
+    result = re.search(r"《.*》",file_name)
+    if result:
+        return result.group()
+    else:
+        return file_name
+
 def list_files():
     files = os.listdir(doc_path)
-    temp = list(filter(lambda file_name : "pdf" in file_name and "《" in file_name , files))
+    temp = list(filter(lambda file_name : "pdf" in file_name , files))
     temp.sort(key = lambda file_name : int(file_name.split(".")[0]))
-    temp = map(lambda file_name : { "key" : re.search(r"《.*》",file_name).group(), "value" : int(file_name.split(".")[0]) }, temp)
-    temp = groupby(temp, lambda item : item["key"])
+    temp = groupby(temp, filename_match)
     str_dic = u"目录"
     for key,group in temp:
         t = list(group)
-        start = str(t[0]["value"])
-        end = str(t[len(t)-1]["value"]) 
-        if start == end :
-            str_dic += '\n第' + start + "章 " + key
-        else :
-            str_dic += '\n第' + start + "-" + end + "章 " + key
+        if len(t) == 1:
+            names = t[0].split(".")
+            str_dic += '\n第' + names[0] + "讲 " + names[1].split(" ")[1]
+        else:
+            start = t[0].split(".")[0]
+            end = t[len(t)-1].split(".")[0]
+            str_dic += '\n第' + start + "-" + end + "讲 " + key
     return str_dic
 
 def log_to_mail(log_msg,image_file=None):
